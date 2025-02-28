@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Journey Funnel Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+        .chart-container {
+            height: 500px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .comparison-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f5ff;
+            border-radius: 8px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .improvement {
+            color: green;
+            font-weight: bold;
+        }
+        .decline {
+            color: red;
+            font-weight: bold;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group input {
+            width: 90%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .data-input {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+        }
+        .data-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .action-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Trial Journey Analysis</h1>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('current')">Current Month</div>
+            <div class="tab" onclick="showTab('comparison')">Month Comparison</div>
+            <div class="tab" onclick="showTab('input')">Update Data</div>
+        </div>
+        
+        <div id="current-tab" class="tab-content active">
+            <h2 id="currentMonthTitle">February Trial Status</h2>
+            <div class="chart-container">
+                <canvas id="currentMonthChart"></canvas>
+            </div>
+            <div class="summary" id="currentSummary"></div>
+        </div>
+        
+        <div id="comparison-tab" class="tab-content">
+            <h2>Month-to-Month Comparison</h2>
+            <div class="chart-container">
+                <canvas id="comparisonChart"></canvas>
+            </div>
+            <div class="comparison-summary" id="comparisonSummary"></div>
+        </div>
+        
+        <div id="input-tab" class="tab-content">
+            <h2>Update Data</h2>
+            <div class="data-input">
+                <h3>Current Month Data</h3>
+                <div class="form-group">
+                    <label for="currentMonth">Current Month Name:</label>
+                    <input type="text" id="currentMonth" value="February">
+                </div>
+                <div class="data-form">
+                    <div class="form-group">
+                        <label for="currentTrialScheduled">Trial Lessons Scheduled:</label>
+                        <input type="number" id="currentTrialScheduled" value="22">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentAbsent1st">Absent After 1st Trial:</label>
+                        <input type="number" id="currentAbsent1st" value="4">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentAbsent2_3">Absent After 2-3 Trials:</label>
+                        <input type="number" id="currentAbsent2_3" value="1">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentNotTaken">Not Taken Any Trial:</label>
+                        <input type="number" id="currentNotTaken" value="5">
+                    </div>
+                    <div class="form-group">
+                        <label for="currentContinued">Students Continued:</label>
+                        <input type="number" id="currentContinued" value="10">
+                    </div>
+                </div>
+                
+                <h3>Previous Month Data</h3>
+                <div class="form-group">
+                    <label for="previousMonth">Previous Month Name:</label>
+                    <input type="text" id="previousMonth" value="January">
+                </div>
+                <div class="data-form">
+                    <div class="form-group">
+                        <label for="previousTrialScheduled">Trial Lessons Scheduled:</label>
+                        <input type="number" id="previousTrialScheduled" value="26">
+                    </div>
+                    <div class="form-group">
+                        <label for="previousAbsent1st">Absent After 1st Trial:</label>
+                        <input type="number" id="previousAbsent1st" value="11">
+                    </div>
+                    <div class="form-group">
+                        <label for="previousAbsent2_3">Absent After 2-3 Trials:</label>
+                        <input type="number" id="previousAbsent2_3" value="3">
+                    </div>
+                    <div class="form-group">
+                        <label for="previousNotTaken">Not Taken Any Trial:</label>
+                        <input type="number" id="previousNotTaken" value="9">
+                    </div>
+                    <div class="form-group">
+                        <label for="previousContinued">Students Continued:</label>
+                        <input type="number" id="previousContinued" value="3">
+                    </div>
+                </div>
+                
+                <button class="action-button" onclick="updateData()">Update Charts</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default data
+        let currentMonthData = {
+            month: "February",
+            trialLessonsScheduled: 22,
+            absentAfter1stTrial: 4,
+            absentAfter2_3Trials: 1,
+            notTakenAnyTrial: 5,
+            studentsContinued: 10
+        };
+        
+        let previousMonthData = {
+            month: "January",
+            trialLessonsScheduled: 26,
+            absentAfter1stTrial: 11,
+            absentAfter2_3Trials: 3,
+            notTakenAnyTrial: 9,
+            studentsContinued: 3
+        };
+        
+        let currentMonthChart = null;
+        let comparisonChart = null;
+        
+        // Initialize everything when the page loads
+        window.onload = function() {
+            initializeCharts();
+        };
+        
+        function initializeCharts() {
+            createCurrentMonthChart();
+            createComparisonChart();
+            updateCurrentSummary();
+            updateComparisonSummary();
+        }
+        
+        // Show/hide tabs
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Activate selected tab button
+            document.querySelectorAll('.tab').forEach((tab, index) => {
+                if (index === 0 && tabName === 'current') tab.classList.add('active');
+                if (index === 1 && tabName === 'comparison') tab.classList.add('active');
+                if (index === 2 && tabName === 'input') tab.classList.add('active');
+            });
+        }
+        
+        // Update data from form inputs
+        function updateData() {
+            // Update current month data
+            currentMonthData = {
+                month: document.getElementById('currentMonth').value,
+                trialLessonsScheduled: parseInt(document.getElementById('currentTrialScheduled').value) || 0,
+                absentAfter1stTrial: parseInt(document.getElementById('currentAbsent1st').value) || 0,
+                absentAfter2_3Trials: parseInt(document.getElementById('currentAbsent2_3').value) || 0,
+                notTakenAnyTrial: parseInt(document.getElementById('currentNotTaken').value) || 0,
+                studentsContinued: parseInt(document.getElementById('currentContinued').value) || 0
+            };
+            
+            // Update previous month data
+            previousMonthData = {
+                month: document.getElementById('previousMonth').value,
+                trialLessonsScheduled: parseInt(document.getElementById('previousTrialScheduled').value) || 0,
+                absentAfter1stTrial: parseInt(document.getElementById('previousAbsent1st').value) || 0,
+                absentAfter2_3Trials: parseInt(document.getElementById('previousAbsent2_3').value) || 0,
+                notTakenAnyTrial: parseInt(document.getElementById('previousNotTaken').value) || 0,
+                studentsContinued: parseInt(document.getElementById('previousContinued').value) || 0
+            };
+            
+            // Update chart title
+            document.getElementById('currentMonthTitle').textContent = currentMonthData.month + " Trial Status";
+            
+            // Destroy existing charts if they exist
+            if (currentMonthChart) {
+                currentMonthChart.destroy();
+            }
+            if (comparisonChart) {
+                comparisonChart.destroy();
+            }
+            
+            // Create new charts
+            createCurrentMonthChart();
+            createComparisonChart();
+            updateCurrentSummary();
+            updateComparisonSummary();
+            
+            // Show current month tab
+            showTab('current');
+        }
+        
+        // Create current month chart
+        function createCurrentMonthChart() {
+            const ctx = document.getElementById('currentMonthChart').getContext('2d');
+            const total = currentMonthData.trialLessonsScheduled;
+            
+            const labels = [
+                'Trial Lessons\nScheduled',
+                'Absent After\n1st Trial',
+                'Absent After\n2-3 Trials',
+                'Not Taken\nAny Trial',
+                'Students\nContinued'
+            ];
+            
+            const data = {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Students',
+                    data: [
+                        currentMonthData.trialLessonsScheduled,
+                        currentMonthData.absentAfter1stTrial,
+                        currentMonthData.absentAfter2_3Trials,
+                        currentMonthData.notTakenAnyTrial,
+                        currentMonthData.studentsContinued
+                    ],
+                    backgroundColor: [
+                        'rgba(53, 162, 235, 0.85)',
+                        'rgba(75, 192, 192, 0.85)',
+                        'rgba(153, 102, 255, 0.85)',
+                        'rgba(255, 159, 64, 0.85)',
+                        'rgba(40, 167, 69, 0.85)'
+                    ],
+                    borderColor: [
+                        'rgb(53, 162, 235)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)',
+                        'rgb(255, 159, 64)',
+                        'rgb(40, 167, 69)'
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 6
+                }]
+            };
+            
+            currentMonthChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    const percentage = (value / total * 100).toFixed(1);
+                                    return [`Students: ${value}`, `${percentage}% of total scheduled`];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Students'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Student Journey Stages'
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'dataLabels',
+                    afterDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        chart.data.datasets.forEach((dataset, datasetIndex) => {
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            if (!meta.hidden) {
+                                meta.data.forEach((element, index) => {
+                                    const value = dataset.data[index];
+                                    const position = element.getCenterPoint();
+                                    
+                                    ctx.fillStyle = '#333';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'bottom';
+                                    ctx.font = 'bold 14px "Segoe UI", sans-serif';
+                                    ctx.fillText(value, position.x, element.y - 10);
+                                    
+                                    if (total > 0) {
+                                        const percentage = (value / total * 100).toFixed(0) + '%';
+                                        ctx.font = '12px "Segoe UI", sans-serif';
+                                        ctx.fillText(percentage, position.x, element.y - 25);
+                                    }
+                                });
+                            }
+                        });
+                    }
+                }]
+            });
+        }
+        
+        // Create comparison chart
+        function createComparisonChart() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            
+            const labels = [
+                'Trial Lessons\nScheduled',
+                'Absent After\n1st Trial',
+                'Absent After\n2-3 Trials',
+                'Not Taken\nAny Trial',
+                'Students\nContinued'
+            ];
+            
+            const data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: currentMonthData.month,
+                        data: [
+                            currentMonthData.trialLessonsScheduled,
+                            currentMonthData.absentAfter1stTrial,
+                            currentMonthData.absentAfter2_3Trials,
+                            currentMonthData.notTakenAnyTrial,
+                            currentMonthData.studentsContinued
+                        ],
+                        backgroundColor: 'rgba(53, 162, 235, 0.7)',
+                        borderColor: 'rgb(53, 162, 235)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: previousMonthData.month,
+                        data: [
+                            previousMonthData.trialLessonsScheduled,
+                            previousMonthData.absentAfter1stTrial,
+                            previousMonthData.absentAfter2_3Trials,
+                            previousMonthData.notTakenAnyTrial,
+                            previousMonthData.studentsContinued
+                        ],
+                        backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        borderWidth: 1
+                    }
+                ]
+            };
+            
+            comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Students'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Student Journey Stages'
+                            }
+                        }
+                    }
+                },
+                plugins: [{
+                    id: 'dataLabels',
+                    afterDraw: (chart) => {
+                        const ctx = chart.ctx;
+                        chart.data.datasets.forEach((dataset, datasetIndex) => {
+                            const meta = chart.getDatasetMeta(datasetIndex);
+                            if (!meta.hidden) {
+                                meta.data.forEach((element, index) => {
+                                    const value = dataset.data[index];
+                                    const position = element.getCenterPoint();
+                                    
+                                    ctx.fillStyle = '#333';
+                                    ctx.textAlign = 'center';
+                                    ctx.textBaseline = 'bottom';
+                                    ctx.font = 'bold 12px "Segoe UI", sans-serif';
+                                    ctx.fillText(value, position.x, element.y - 5);
+                                });
+                            }
+                        });
+                    }
+                }]
+            });
+        }
+        
+        // Update current month summary
+        function updateCurrentSummary() {
+            const total = currentMonthData.trialLessonsScheduled;
+            if (total === 0) {
+                document.getElementById('currentSummary').innerHTML = '<p>No data available for current month.</p>';
+                return;
+            }
+            
+            const conversionRate = (currentMonthData.studentsContinued / total * 100).toFixed(1);
+            const dropoffRate = (100 - conversionRate).toFixed(1);
+            
+            const absentFirstPercent = (currentMonthData.absentAfter1stTrial / total * 100).toFixed(1);
+            const absent2_3Percent = (currentMonthData.absentAfter2_3Trials / total * 100).toFixed(1);
+            const notTakenPercent = (currentMonthData.notTakenAnyTrial / total * 100).toFixed(1);
+            
+            document.getElementById('currentSummary').innerHTML = `
+                <h3>${currentMonthData.month} Funnel Analysis</h3>
+                <p><strong>Total Trial Lessons Scheduled:</strong> ${total} students (100%)</p>
+                <p><strong>Overall Conversion Rate:</strong> ${conversionRate}% of scheduled trials continued</p>
+                <p><strong>Overall Drop-off Rate:</strong> ${dropoffRate}% of scheduled trials did not continue</p>
+                <p><strong>Drop-off Breakdown:</strong></p>
+                <ul>
+                    <li>Absent After 1st Trial: ${currentMonthData.absentAfter1stTrial} students (${absentFirstPercent}% of total)</li>
+                    <li>Absent After 2-3 Trials: ${currentMonthData.absentAfter2_3Trials} students (${absent2_3Percent}% of total)</li>
+                    <li>Not Taken Any Trial: ${currentMonthData.notTakenAnyTrial} students (${notTakenPercent}% of total)</li>
+                </ul>
+            `;
+        }
+        
+        // Update comparison summary
+        function updateComparisonSummary() {
+            // Current month metrics
+            const currentTotal = currentMonthData.trialLessonsScheduled;
+            const currentConversionRate = currentTotal > 0 ? (currentMonthData.studentsContinued / currentTotal * 100).toFixed(1) : 0;
+            
+            // Previous month metrics
+            const previousTotal = previousMonthData.trialLessonsScheduled;
+            const previousConversionRate = previousTotal > 0 ? (previousMonthData.studentsContinued / previousTotal * 100).toFixed(1) : 0;
+            
+            // Calculate changes
+            const totalChange = currentTotal - previousTotal;
+            const totalChangePercent = previousTotal > 0 ? ((totalChange / previousTotal) * 100).toFixed(1) : 'N/A';
+            
+            const conversionChange = currentConversionRate - previousConversionRate;
+            
+            let comparisonHTML = `
+                <h3>${currentMonthData.month} vs ${previousMonthData.month} Comparison</h3>
+                
+                <p><strong>Trial Lessons Scheduled:</strong>
+                    ${currentMonthData.month}: ${currentTotal} students | 
+                    ${previousMonthData.month}: ${previousTotal} students | 
+                    Change: <span class="${totalChange >= 0 ? 'improvement' : 'decline'}">${totalChange >= 0 ? '+' : ''}${totalChange} ${previousTotal > 0 ? '(' + (totalChange >= 0 ? '+' : '') + totalChangePercent + '%)' : ''}</span>
+                </p>
+                
+                <p><strong>Conversion Rate:</strong>
+                    ${currentMonthData.month}: ${currentConversionRate}% | 
+                    ${previousMonthData.month}: ${previousConversionRate}% | 
+                    Change: <span class="${conversionChange >= 0 ? 'improvement' : 'decline'}">${conversionChange >= 0 ? '+' : ''}${conversionChange}%</span>
+                </p>
+                
+                <h4>Detailed Metrics Comparison:</h4>
+                <table style="width:100%; border-collapse: collapse; margin-top: 10px;">
+                    <tr style="background-color: #f0f0f0;">
+                        <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">Metric</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">${currentMonthData.month}</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">${previousMonthData.month}</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">Change</th>
+                    </tr>
+            `;
+            
+            // Add detailed metric comparisons
+            const metrics = [
+                { key: 'absentAfter1stTrial', label: 'Absent After 1st Trial', improvement: 'lower' },
+                { key: 'absentAfter2_3Trials', label: 'Absent After 2-3 Trials', improvement: 'lower' },
+                { key: 'notTakenAnyTrial', label: 'Not Taken Any Trial', improvement: 'lower' },
+                { key: 'studentsContinued', label: 'Students Continued', improvement: 'higher' }
+            ];
+            
+            metrics.forEach((metric, index) => {
+                const currentValue = currentMonthData[metric.key];
+                const previousValue = previousMonthData[metric.key];
+                const change = currentValue - previousValue;
+                
+                // Calculate percentage of total for each month
+                const currentPercent = currentTotal > 0 ? ((currentValue / currentTotal) * 100).toFixed(1) : 0;
+                const previousPercent = previousTotal > 0 ? ((previousValue / previousTotal) * 100).toFixed(1) : 0;
+                const percentChange = (currentPercent - previousPercent).toFixed(1);
+                
+                // Determine if change is improvement based on metric type
+                const isImprovement = metric.improvement === 'higher' ? change >= 0 : change <= 0;
+                
+                const rowStyle = index % 2 === 0 ? '' : 'background-color: #f9f9f9;';
+                
+                comparisonHTML += `
+                    <tr style="${rowStyle}">
+                        <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${metric.label}</td>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${currentValue} (${currentPercent}%)</td>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${previousValue} (${previousPercent}%)</td>
+                        <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">
+                            <span class="${isImprovement ? 'improvement' : 'decline'}">
+                                ${change >= 0 ? '+' : ''}${change} (${percentChange >= 0 ? '+' : ''}${percentChange}%)
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            comparisonHTML += `</table>`;
+            
+            // Analysis and insights section
+            comparisonHTML += `
+                <h4>Key Insights:</h4>
+                <ul>
+            `;
+            
+            // Generate insights based on the data
+            if (currentConversionRate > previousConversionRate) {
+                comparisonHTML += `<li>Overall conversion rate has <span class="improvement">improved by ${(currentConversionRate - previousConversionRate).toFixed(1)}%</span> compared to ${previousMonthData.month}.</li>`;
+            } else if (currentConversionRate < previousConversionRate) {
+                comparisonHTML += `<li>Overall conversion rate has <span class="decline">decreased by ${(previousConversionRate - currentConversionRate).toFixed(1)}%</span> compared to ${previousMonthData.month}.</li>`;
+            }
+            
+            // Add drop-off rate changes
+            const currentDropoffRate = (100 - currentConversionRate).toFixed(1);
+            const previousDropoffRate = (100 - previousConversionRate).toFixed(1);
+            const dropoffChange = currentDropoffRate - previousDropoffRate;
+            
+            if (dropoffChange < 0) {
+                comparisonHTML += `<li>Student drop-off rate has <span class="improvement">decreased by ${Math.abs(dropoffChange).toFixed(1)}%</span>, showing improved retention.</li>`;
+            } else if (dropoffChange > 0) {
+                comparisonHTML += `<li>Student drop-off rate has <span class="decline">increased by ${dropoffChange.toFixed(1)}%</span>, indicating a retention challenge.</li>`;
+            }
+            
+            comparisonHTML += `</ul>`;
+            
+            document.getElementById('comparisonSummary').innerHTML = comparisonHTML;
+        }
+    </script>
+</body>
+</html>
